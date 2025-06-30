@@ -18,18 +18,12 @@ async def search_student(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not result_sabahi.empty:
         row = result_sabahi.iloc[0]
-        await update.message.reply_text(
-            f"📚 الدراسة: صباحي
-🆔 المعرف: {row['ID']}
-🔐 كلمة المرور: {row['كلمة المرور']}"
-        )
+        response = f"📚 الدراسة: صباحي\n🆔 المعرف: {row['ID']}\n🔐 كلمة المرور: {row['كلمة المرور']}"
+        await update.message.reply_text(response)
     elif not result_masai.empty:
         row = result_masai.iloc[0]
-        await update.message.reply_text(
-            f"🌙 الدراسة: مسائي
-🆔 المعرف: {row['ID']}
-🔐 كلمة المرور: {row['كلمة المرور']}"
-        )
+        response = f"🌙 الدراسة: مسائي\n🆔 المعرف: {row['ID']}\n🔐 كلمة المرور: {row['كلمة المرور']}"
+        await update.message.reply_text(response)
     else:
         await update.message.reply_text("❌ لم يتم العثور على الاسم. تأكد من كتابة الاسم الرباعي بشكل صحيح.")
 
