@@ -3,9 +3,9 @@ import pandas as pd
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-# تحميل الملفات
-df_sabahi = pd.read_excel("Copy of تربية انكليزي اولى صباحي(1).xlsx")
-df_masai = pd.read_excel("Copy of تربية انكليزي اولى مسائي(1).xlsx")
+# تحميل الملفات باستخدام أسماء بسيطة
+df_sabahi = pd.read_excel("sabahi.xlsx")
+df_masai = pd.read_excel("masai.xlsx")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("مرحبًا! الرجاء إدخال كود الطالب الخاص بك فقط:")
