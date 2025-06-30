@@ -39,3 +39,10 @@ if __name__ == "__main__":
 
     print("البوت يعمل الآن...")
     app.run_polling()
+import asyncio
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())  # أو أي دالة تبدأ البوت مثل start_bot()
+    except (KeyboardInterrupt, SystemExit):
+        print("Bot stopped.")
