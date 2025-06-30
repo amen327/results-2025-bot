@@ -1,48 +1,56 @@
-
+import logging
 import pandas as pd
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-# تحميل الملفات باستخدام أسماء بسيطة
-df_sabahi = pd.read_excel("sabahi.xlsx")
-df_masai = pd.read_excel("masai.xlsx")
+# إعدادات تسجيل الأخطاء
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("مرحبًا! الرجاء إدخال كود الطالب الخاص بك فقط:")
+# تحميل الملفات مرة واحدة
+df_sabah = pd.read_excel("صباحي اول كودات.xlsx")
+df_sabah["الدراسة"] = "صباحي"
 
-async def search_by_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    code_input = update.message.text.strip()
+df_masa = pd.read_excel("مسائي اول كودات.xlsx")
+df_masa["الدراسة"] = "مسائي"
 
-    result_sabahi = df_sabahi[df_sabahi["كود الطالب"].astype(str) == code_input]
-    result_masai = df_masai[df_masai["كود الطالب"].astype(str) == code_input]
+# دمج الملفات
+df_all = pd.concat([df_sabah, df_masa], ignore_index=True)
 
-    if not result_sabahi.empty:
-        row = result_sabahi.iloc[0]
-        response = f"📚 الدراسة: صباحي\n👤 الاسم: {row['اسم الطالب']}\n🆔 كود الطالب: {row['كود الطالب']}"
-        await update.message.reply_text(response)
-    elif not result_masai.empty:
-        row = result_masai.iloc[0]
-        response = f"🌙 الدراسة: مسائي\n👤 الاسم: {row['اسم الطالب']}\n🆔 كود الطالب: {row['كود الطالب']}"
-        await update.message.reply_text(response)
+# تأكد من أن العمود الأول اسمه "ID"
+df_all.columns = [col.strip().lower() for col in df_all.columns]  # تحويل إلى lowercase
+df_all.rename(columns={"id": "id", "كلمة المرور": "password", "اسم الطالب": "name"}, inplace=True)
+
+# المعالج الأساسي للرسائل
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_input = update.message.text.strip()
+    
+    if not user_input.isdigit():
+        await update.message.reply_text("❌ الرجاء إدخال كود الطالب فقط (أرقام فقط).")
+        return
+
+    code = int(user_input)
+    row = df_all[df_all['id'] == code]
+
+    if row.empty:
+        await update.message.reply_text("لم يتم العثور على الطالب بهذا الكود ❗")
     else:
-        await update.message.reply_text("❌ الكود غير موجود. تأكد من إدخاله بشكل صحيح.")
+        name = row.iloc[0]["name"]
+        password = row.iloc[0]["password"]
+        study_type = row.iloc[0]["الدراسة"]
+        reply = f"👤 الاسم: {name}\n🔐 كلمة المرور: {password}\n📚 الدراسة: {study_type}"
+        await update.message.reply_text(reply)
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("أرسل كود الطالب فقط للحصول على بياناتك.")
+# إعداد البوت
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("أهلاً بك، أرسل كود الطالب فقط للحصول على المعلومات 📩")
 
-if __name__ == "__main__":
-    app = ApplicationBuilder().token("7923983055:AAEc9j_hGp1Qq_3ehoaVSPXP2LKNBlk9oMw").build()
+if __name__ == '__main__':
+    application = ApplicationBuilder().token("7923983055:AAEc9j_hGp1Qq_3ehoaVSPXP2LKNBlk9oMw").build()
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, search_by_code))
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    print("البوت يعمل الآن...")
-    app.run_polling()
-import asyncio
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())  # أو أي دالة تبدأ البوت مثل start_bot()
-    except (KeyboardInterrupt, SystemExit):
-        print("Bot stopped.")
+    application.run_polling()
